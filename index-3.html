@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Administrator Terminal</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="user.js"></script>
+
+<style>
+:root {
+    --bg-dark: #080d1a;
+    --card-bg: rgba(15, 23, 42, 0.75);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --accent-purple: #8b5cf6;
+    --accent-indigo: #6366f1;
+    --accent-blue: #3b82f6;
+    --accent-cyan: #06b6d4;
+    --accent-red: #ef4444;
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+}
+
+* {
+    box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    text-align: center;
+    background-color: var(--bg-dark);
+    background-image: 
+        radial-gradient(circle at 80% 15%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 15% 85%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 35px 35px, 35px 35px;
+    background-attachment: fixed;
+    color: var(--text-main);
+    padding: 40px 20px;
+    min-height: 100vh;
+    position: relative;
+}
+
+.home-btn {
+    position: absolute;
+    top: 25px;
+    left: 30px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.25s ease;
+}
+
+.home-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-top: 50px;
+    margin-bottom: 35px;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #ffffff 30%, #c084fc 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+button.action-btn {
+    width: 240px;
+    height: 54px;
+    font-size: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: white;
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+button.action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px rgba(139, 92, 246, 0.45);
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(4, 7, 13, 0.82);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.modal-content {
+    background: #0f172a;
+    width: 90%;
+    max-width: 480px;
+    padding: 32px;
+    border-radius: 20px;
+    margin: 40px auto;
+    text-align: left;
+    color: var(--text-main);
+    position: relative;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 22px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: 0.2s;
+}
+
+.close:hover { color: white; }
+
+label {
+    font-weight: 600;
+    display: block;
+    margin-top: 16px;
+    color: #d1d5db;
+    font-size: 13px;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px 14px;
+    margin-top: 6px;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    outline: none;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    color: white;
+}
+
+select option {
+    background: #1e293b;
+    color: white;
+}
+
+input:focus, select:focus {
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+.payment-box {
+    background: rgba(139, 92, 246, 0.08);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 14px;
+    padding: 18px;
+    margin-top: 10px;
+}
+
+.payment-box h3 {
+    font-size: 15px;
+    color: #c084fc;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.payment-box p {
+    font-size: 13px;
+    color: #cbd5e1;
+    line-height: 1.6;
+}
+
+.payment-number {
+    display: inline-block;
+    background: #1e293b;
+    padding: 4px 10px;
+    border-radius: 6px;
+    color: #facc15;
+    font-weight: 700;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.btn-step {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-next {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: white;
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid var(--border-color);
+}
+
+.btn-submit {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.form-step { display: none; }
+.form-step.active { display: block; }
+
+.logs-container {
+    display: none;
+    max-width: 1100px;
+    margin: 40px auto;
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    color: white;
+    padding: 28px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    text-align: left;
+}
+
+.logs-container h2 {
+    color: #ffffff;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.table-wrapper { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+
+th, td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); text-align: left; font-size: 13.5px; }
+
+th {
+    background-color: rgba(255, 255, 255, 0.03);
+    color: #c084fc;
+    font-weight: 700;
+}
+
+td { color: #e5e7eb; }
+
+.badge-assigned { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+.badge-unassigned { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+
+.response-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.accept-btn, .reject-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.accept-btn:hover { border-color: rgba(16, 185, 129, 0.5); color: #34d399; }
+.reject-btn:hover { border-color: rgba(239, 68, 68, 0.5); color: #fca5a5; }
+.accept-btn.active {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: transparent;
+    color: white;
+}
+.reject-btn.active {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    border-color: transparent;
+    color: white;
+}
+
+.ticket-badge {
+    color: #c084fc;
+    font-weight: 700;
+    background: rgba(139, 92, 246, 0.15);
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    display: inline-block;
+}
+
+.delete-btn {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+    background: #dc2626;
+    color: white;
+}
+
+.custom-swal-popup {
+    background: #0f172a !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 16px !important;
+    color: white !important;
+}
+
+.custom-swal-title {
+    color: #ffffff !important;
+}
+
+        /* Confirm button: always visible, solid blue */
+        .swal2-confirm, .swal2-styled.swal2-confirm, .neon-swal-confirm {
+            background: linear-gradient(135deg,#2563eb,#3b82f6) !important;
+            background-color: #2563eb !important;
+            color: #fff !important;
+            border: 1px solid #60a5fa !important;
+            border-radius: 10px !important;
+            font-weight: 700 !important;
+            box-shadow: 0 4px 16px rgba(37,99,235,.45) !important;
+            opacity: 1 !important;
+        }
+        .swal2-confirm:hover, .neon-swal-confirm:hover { background: #1d4ed8 !important; filter: brightness(1.1); }
+        .swal2-confirm:focus { box-shadow: 0 0 0 3px rgba(96,165,250,.5) !important; }
+    
+/* ---- Mark as done / cancelled by customer ---- */
+.done-btn { padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); color: #cfdcf2; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; }
+.done-btn:hover:not(:disabled) { border-color: rgba(96,165,250,.6); color: #93c5fd; }
+.done-btn:disabled { opacity: .4; cursor: not-allowed; }
+.done-btn.active { background: linear-gradient(135deg, #2563eb, #1d4ed8); border-color: transparent; color: #fff; opacity: 1; }
+.cancelled-note { padding: 8px 12px; border-radius: 10px; background: rgba(239,68,68,.15); color: #fca5a5; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.response-group.locked .accept-btn, .response-group.locked .reject-btn, .response-group.locked .done-btn { pointer-events: none; opacity: .35; }
+</style>
+<link rel="stylesheet" href="theme.css">
+</head>
+
+<body>
+
+<a href="index.html" class="home-btn"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+
+<h1><i class="fa-solid fa-network-wired"></i> Submit Request to Network Administrator</h1>
+
+<button class="action-btn" onclick="openForm()">
+    <i class="fa-solid fa-paper-plane"></i> New Submit
+</button>
+
+<div id="myForm" class="modal">
+    <div class="modal-content">
+
+        <span class="close" onclick="closeForm()">&times;</span>
+
+        <h2 style="margin-top:0; color:#ffffff; font-size: 20px;"><i class="fa-solid fa-ticket"></i> Submit Ticket</h2>
+
+        <form id="adminForm" onsubmit="handleSubmit(event)">
+            <!-- الخطوة 1: التفاصيل الأساسية -->
+            <div id="step1" class="form-step active">
+                <label><i class="fa-solid fa-microchip"></i> Device Type</label>
+                <select id="field_device" required>
+                    <option value="">-- Select system --</option>
+                    <option>Security Cameras</option>
+                    <option>LAN/WAN Networks</option>
+                    <option>Setting Up VLANs</option>
+                    <option>Windows Server</option>
+                    <option>Firewall and Security</option>
+                    <option>Other</option>
+                </select>
+
+                <label><i class="fa-solid fa-user"></i> Customer Name</label>
+                <input type="text" id="field_name" placeholder="Enter customer full name" required>
+
+                <label><i class="fa-solid fa-phone"></i> Phone Number</label>
+                <input type="text" id="field_phone" placeholder="Enter phone number" required>
+
+                <label><i class="fa-solid fa-location-dot"></i> Location</label>
+                <input type="text" id="field_location" placeholder="Enter location" required>
+
+                <label><i class="fa-solid fa-file-lines"></i> System Details</label>
+                <input type="text" id="field_details" placeholder="Describe the issue" required>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-step btn-next" onclick="goToStep2()">Next <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- الخطوة 2: الدفع وتأكيد الطلب -->
+            <div id="step2" class="form-step">
+                <div class="payment-box">
+                    <h3><i class="fa-solid fa-wallet"></i> Confirmation Fee (50 EGP)</h3>
+                    <p>Please transfer <strong>50 EGP</strong> via Vodafone Cash to: <br><span class="payment-number">01144997914</span></p>
+                    
+                    <label><i class="fa-solid fa-mobile-screen"></i> Sender Phone / Account Number</label>
+                    <input type="text" id="field_pay_sender" placeholder="Phone number you transferred from">
+                    
+                    <label><i class="fa-solid fa-receipt"></i> Transaction Reference ID (الرقم المرجعي)</label>
+                    <input type="text" id="field_pay_tx" placeholder="Enter transaction/reference ID">
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-step btn-back" onclick="goToStep1()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    <button type="submit" class="btn-step btn-submit">Confirm & Send Request</button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<div class="logs-container" id="adminSection">
+    <h2><i class="fa-solid fa-user-gear"></i> Administration Tasks Terminal (Global Web System)</h2>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticket Code</th>
+                    <th>Device</th>
+                    <th>Customer Name</th>
+                    <th>Phone</th>
+                    <th>Location</th>
+                    <th>Payment Details</th>
+                    <th>Problem Description</th>
+                    <th>Assigned To</th>
+                    <th>Your Response</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="logsTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyBV93xGbKln5RcaPP9VOtlmh5auKD04Zms",
+    authDomain: "creatitity-d09f7.firebaseapp.com",
+    databaseURL: "https://creatitity-d09f7-default-rtdb.firebaseio.com",
+    projectId: "creatitity-d09f7",
+    storageBucket: "creatitity-d09f7.appspot.com",
+    messagingSenderId: "591631410491",
+    appId: "1:591631410491:web:ff000c0a8d2f030f57031e"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+document.addEventListener("DOMContentLoaded", () => {
+    const isAdmin = sessionStorage.getItem("isAdmin");
+    if (isAdmin === "true") {
+        document.getElementById("adminSection").style.display = "block";
+        ccUser.ready().then(listenToLiveRequests);
+    }
+});
+
+function openForm(){
+    document.getElementById("myForm").style.display = "block";
+    goToStep1();
+    ccUser.prefill({ name: 'field_name', phone: 'field_phone' });
+}
+
+function goToStep1() {
+    document.getElementById("step1").classList.add("active");
+    document.getElementById("step2").classList.remove("active");
+}
+
+function goToStep2() {
+    const device = document.getElementById("field_device").value.trim();
+    const name = document.getElementById("field_name").value.trim();
+    const phone = document.getElementById("field_phone").value.trim();
+    const location = document.getElementById("field_location").value.trim();
+    const details = document.getElementById("field_details").value.trim();
+
+    if(!device || !name || !phone || !location || !details) {
+        Swal.fire({
+            title: 'Please fill out all fields!',
+            text: 'جميع البيانات مطلوبة للانتقال لخطوة الدفع.',
+            icon: 'warning',
+            customClass: { popup: 'custom-swal-popup', title: 'custom-swal-title' }
+        });
+        return;
+    }
+
+    document.getElementById("step1").classList.remove("active");
+    document.getElementById("step2").classList.add("active");
+}
+
+function closeForm(){
+    document.getElementById("myForm").style.display = "none";
+    document.getElementById("adminForm").reset();
+    goToStep1();
+}
+
+window.onclick = function(event){
+    let modal = document.getElementById("myForm");
+    if(event.target == modal){ closeForm(); }
+}
+
+function handleSubmit(event) {
+    event.preventDefault();
+    
+    const paySender = document.getElementById("field_pay_sender").value.trim();
+    const payTx = document.getElementById("field_pay_tx").value.trim();
+
+    if(!paySender || !payTx) {
+        Swal.fire({
+            title: 'Payment Details Required',
+            text: 'برجاء إدخال رقم المحوّل والرقم المرجعي .',
+            icon: 'warning',
+            customClass: { popup: 'custom-swal-popup', title: 'custom-swal-title' }
+        });
+        return;
+    }
+
+    const ticketId = "ADM-" + Math.floor(1000 + Math.random() * 9000);
+
+    const requestData = {
+        dbId: ticketId,
+        device: document.getElementById("field_device").value,
+        name: document.getElementById("field_name").value,
+        phone: document.getElementById("field_phone").value,
+        location: document.getElementById("field_location").value,
+        details: document.getElementById("field_details").value,
+        paySender: paySender,
+        payTx: payTx,
+        ...ccUser.requestExtras()
+    };
+
+    database.ref('administration/' + ticketId).set(requestData)
+    .then(() => {
+        ccUser.markSaved();
+        closeForm();
+        Swal.fire({
+            title: 'Request Sent Successfully!',
+            text: `Admin Ticket created with Code: ${ticketId}`,
+            icon: 'success',
+            customClass: {
+                popup: 'custom-swal-popup',
+                title: 'custom-swal-title'
+            }
+        });
+    });
+}
+
+function listenToLiveRequests() {
+    const currentAdmin = sessionStorage.getItem("currentAdmin");
+    database.ref('administration').on('value', (snapshot) => {
+        const tableBody = document.getElementById("logsTableBody");
+        tableBody.innerHTML = "";
+        const data = snapshot.val();
+        
+        if (!data) {
+            tableBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--text-muted);">No admin tasks registered in the cloud database.</td></tr>`;
+            return;
+        }
+
+        const myKeys = Object.keys(data).filter(key => data[key].assignedAdmin === currentAdmin);
+
+        if (myKeys.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--text-muted);">No requests assigned to you yet. Wait for the Owner to distribute a request to you.</td></tr>`;
+            return;
+        }
+
+        myKeys.forEach(key => {
+            const req = data[key];
+            const payInfo = `<small style="color:#facc15;">From: ${req.paySender || '-'}</small><br><small style="color:var(--text-muted);">TxID: ${req.payTx || '-'}</small>`;
+            
+            tableBody.innerHTML += `
+                <tr>
+                    <td><span class="ticket-badge">${req.dbId || ''}</span></td>
+                    <td><strong>${req.device}</strong></td>
+                    <td>${req.name}</td>
+                    <td>${req.phone}</td>
+                    <td>${req.location}</td>
+                    <td>${payInfo}</td>
+                    <td>${req.details}</td>
+                    <td>${req.assignedAdmin ? `<span class="badge-assigned"><i class="fa-solid fa-user-check"></i> ${req.assignedAdmin}</span>` : `<span class="badge-unassigned">Unassigned</span>`}</td>
+                    <td>
+                        <div class="response-group ${req.userCancelled ? 'locked' : ''}">
+                            <button class="accept-btn ${req.adminResponse === 'accepted' ? 'active' : ''}" onclick="respondToTicket('${req.dbId}', 'accepted')">
+                                <i class="fa-solid fa-check"></i> Agree
+                            </button>
+                            <button class="reject-btn ${req.adminResponse === 'rejected' ? 'active' : ''}" onclick="respondToTicket('${req.dbId}', 'rejected')">
+                                <i class="fa-solid fa-xmark"></i> Reject
+                            </button>
+                            ${req.userCancelled ? '<span class="cancelled-note"><i class="fa-solid fa-ban"></i> Cancelled by customer</span>' : `<button class="done-btn ${req.status === 'completed' ? 'active' : ''}" ${(req.adminResponse === 'accepted' && req.status !== 'completed') ? '' : 'disabled'} onclick="markCompleted('administration', '${req.dbId}')"><i class="fa-solid fa-flag-checkered"></i> ${req.status === 'completed' ? 'Done ✓' : 'Mark Done'}</button>`}
+                        </div>
+                    </td>
+                    <td>
+                        <button class="delete-btn" onclick="deleteLiveTicket('${req.dbId}')">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    });
+}
+
+function respondToTicket(ticketId, decision) {
+    const currentAdmin = sessionStorage.getItem("currentAdmin");
+    database.ref('administration/' + ticketId).update({
+        adminResponse: decision,
+        adminResponseAt: new Date().toISOString(),
+        respondedBy: currentAdmin
+    }).then(() => {
+        Swal.fire({
+            title: decision === 'accepted' ? 'Marked as Agreed' : 'Marked as Rejected',
+            text: `Your decision on ticket ${ticketId} has been sent to the Owner.`,
+            icon: decision === 'accepted' ? 'success' : 'warning',
+            timer: 1400,
+            showConfirmButton: false,
+            customClass: { popup: 'custom-swal-popup', title: 'custom-swal-title' }
+        });
+    });
+}
+
+function markCompleted(refName, ticketId) {
+    const currentAdmin = sessionStorage.getItem("currentAdmin");
+    const path = refName + '/' + ticketId;
+    const sw = { customClass: { popup: 'custom-swal-popup', title: 'custom-swal-title' } };
+    database.ref(path).once('value').then(snap => {
+        const t = snap.val() || {};
+        if (t.userCancelled) { Swal.fire(Object.assign({ title: 'Request cancelled', text: 'The customer cancelled this request.', icon: 'info' }, sw)); return; }
+        if (t.status === 'completed') return;
+        if (t.adminResponse !== 'accepted') { Swal.fire(Object.assign({ title: 'Agree first', text: 'Mark the request as Agreed before marking it as done.', icon: 'info' }, sw)); return; }
+        Swal.fire(Object.assign({
+            title: 'Mark as done?',
+            text: 'Confirm that ticket ' + ticketId + ' has been fully carried out. The customer will see it as completed in their account.',
+            icon: 'question', showCancelButton: true,
+            confirmButtonText: 'Yes, it is done', cancelButtonText: 'Cancel', confirmButtonColor: '#10b981'
+        }, sw)).then(r => {
+            if (!r.isConfirmed) return;
+            database.ref(path).update({ status: 'completed', completedAt: Date.now(), completedBy: currentAdmin })
+                .then(() => Swal.fire(Object.assign({ title: 'Marked as Done', text: 'The customer can now see this request as completed.', icon: 'success', timer: 1500, showConfirmButton: false }, sw)))
+                .catch(err => Swal.fire('Error', err.message, 'error'));
+        });
+    });
+}
+
+function deleteLiveTicket(id) {
+    Swal.fire({
+        title: 'Delete admin log?',
+        text: "This deletes the ticket from the global cloud servers completely!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Yes, Delete Ticket',
+        cancelButtonText: 'Cancel',
+        customClass: {
+            popup: 'custom-swal-popup',
+            title: 'custom-swal-title'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            database.ref('administration/' + id).remove()
+            .then(() => {
+                Swal.fire({
+                    title: 'Deleted!',
+                    text: 'Admin task successfully cleared.',
+                    icon: 'success',
+                    customClass: {
+                        popup: 'custom-swal-popup',
+                        title: 'custom-swal-title'
+                    }
+                });
+            });
+        }
+    });
+}
+</script>
+<script src="presence.js"></script>
+</body>
+</html>
