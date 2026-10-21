@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://provnet311.github.io/Provnet/sitemap.xml
